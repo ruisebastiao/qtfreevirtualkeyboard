@@ -16,12 +16,14 @@
 #include <QDebug>
 #include <QEvent>
 #include <QGuiApplication>
+#include <QKeyEvent>
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QVariant>
 #include <QQmlEngine>
 #include <QJSEngine>
 #include <QPropertyAnimation>
+#include <QTimer>
 
 #include <private/qquickflickable_p.h>
 #include "DeclarativeInputEngine.h"
@@ -111,6 +113,9 @@ void VirtualKeyboardInputContext::showInputPanel()
 //==============================================================================
 void VirtualKeyboardInputContext::hideInputPanel()
 {
+    if (d->FocusItem) {
+        d->FocusItem->setFocus(false);
+    }
     d->Visible = false;
     QPlatformInputContext::hideInputPanel();
     emitInputPanelVisibleChanged();
@@ -127,6 +132,32 @@ bool VirtualKeyboardInputContext::isInputPanelVisible() const
 //==============================================================================
 bool VirtualKeyboardInputContext::isAnimating() const
 {
+    return false;
+}
+
+//==============================================================================
+bool VirtualKeyboardInputContext::filterEvent(const QEvent *event)
+{
+    if (!event || event->type() != QEvent::KeyPress) {
+        return false;
+    }
+
+    const QKeyEvent *keyEvent = static_cast<const QKeyEvent *>(event);
+    if (keyEvent->key() != Qt::Key_Enter && keyEvent->key() != Qt::Key_Return) {
+        return false;
+    }
+
+    if (!d->Visible || !d->FocusItem || !d->FocusItem->inputMethodQuery(Qt::ImEnabled).toBool()) {
+        return false;
+    }
+
+    QTimer::singleShot(0, this, [this]() {
+        if (d->FocusItem) {
+            d->FocusItem->setFocus(false);
+        }
+        hideInputPanel();
+    });
+
     return false;
 }
 
@@ -251,4 +282,3 @@ QObject* VirtualKeyboardInputContext::inputEngineProvider(QQmlEngine *engine, QJ
 
 //------------------------------------------------------------------------------
 // EOF VirtualKeyboardInpitContext.cpp
-

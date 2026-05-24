@@ -87,6 +87,12 @@ public:
     virtual bool isAnimating() const;
 
     /**
+     * Finish text input on Enter/Return while keeping the key event available
+     * for the focused control to commit its own editing state.
+     */
+    virtual bool filterEvent(const QEvent *event);
+
+    /**
      * This virtual method gets called to notify updated focus to object.
      * \warning Input methods must not call this function directly.
      * This function does the main work. It sets the input mode of the

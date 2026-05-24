@@ -16,6 +16,8 @@
 #include <QInputMethodEvent>
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <QInputMethod>
+#include <QQuickItem>
 #include <QDebug>
 #include <QQmlEngine>
 #include <QJSEngine>
@@ -122,6 +124,17 @@ void DeclarativeInputEngine::sendKeyValueToFocusItem(const Qt::Key key)
 {
     QKeyEvent keyPress(QEvent::KeyPress, key, Qt::NoModifier);
     QCoreApplication::sendEvent(QGuiApplication::focusObject(),&keyPress);
+
+    if (key == Qt::Key_Enter || key == Qt::Key_Return)
+    {
+        QTimer::singleShot(0, []() {
+            if (QQuickItem *item = qobject_cast<QQuickItem *>(QGuiApplication::focusObject()))
+            {
+                item->setFocus(false);
+            }
+            QGuiApplication::inputMethod()->hide();
+        });
+    }
 }
 
 
